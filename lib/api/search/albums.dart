@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:orpheus_client/api/common.dart' as common;
+import 'package:orpheus_client/components/search_album_paginate_item.dart';
 import 'package:orpheus_client/exeptions.dart';
 import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
@@ -9,8 +11,15 @@ const uuid = Uuid();
 
 const apiPrefix = '${common.apiPrefix}/Search/Album/';
 
+class SearchAlbumsGetResponse {
+  final List<SearchAlbumPaginateItem> albums;
+  final int totalPages;
+
+  SearchAlbumsGetResponse(this.albums, this.totalPages);
+}
+
 class SearchAlbums {
-  static Future<http.Response> get(String query,
+  static Future<SearchAlbumsGetResponse?> get(String query,
       {int page = 1, perPage = 20}) async {
     final String url = '$apiPrefix/${Uri.encodeFull(query.trim())}';
 
@@ -32,6 +41,16 @@ class SearchAlbums {
       log("[SearchAlbums.get] Need Login. status code: ${response?.statusCode}, body: ${response?.body}");
       throw NeedLoginException;
     }
-    return response;
+    try {
+      final json = jsonDecode(response.body);
+      final albums = json['tracklists']
+          .map((json) => SearchAlbumPaginateItem.fromJson(json))
+          .toList()
+          .cast<SearchAlbumPaginateItem>() as List<SearchAlbumPaginateItem>;
+      final totalPages = json['totalpages'];
+      return SearchAlbumsGetResponse(albums, totalPages);
+    } on FormatException {
+      log("[Albums.get] Failed to parse json. status code: ${response.statusCode}, body: ${response.body}");
+    }
   }
 }

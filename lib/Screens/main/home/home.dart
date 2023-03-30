@@ -8,7 +8,7 @@ import 'package:orpheus_client/api/albums.dart' as albumsApi;
 import 'package:orpheus_client/exeptions.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:orpheus_client/components/home_album_item.dart';
+import 'package:orpheus_client/components/album_paginate_item.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,26 +17,30 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-Future<Map<String, dynamic>> getPaginate(
+Future<albumsApi.AlbumsGetResponse?> getPaginate(
     BuildContext context, int page, perPage) async {
-  http.Response? response;
-  Map<String, dynamic>? resultJson;
+  late albumsApi.AlbumsGetResponse? result;
   try {
-    response = await albumsApi.Albums.get(page: page, perPage: perPage);
-    resultJson = jsonDecode(response.body);
+    result = await albumsApi.Albums.get(page: page, perPage: perPage);
+    if (result == null) {
+      throw const FormatException();
+    }
   } on NeedLoginException {
     Navigator.pushReplacementNamed(context, '/login');
   } on FormatException {
-    log("[HomeScreen.getPaginate] Failed to parse json. status code: ${response?.statusCode}, body: ${response?.body}");
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text("ロードに失敗しました"),
       backgroundColor: Colors.red,
     ));
   }
-  return resultJson!;
+  return result;
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with AutomaticKeepAliveClientMixin<HomeScreen> {
+  @override
+  bool get wantKeepAlive => true;
+
   int currentPage = 1;
   int perPage = 20;
   late int totalPage;
@@ -44,18 +48,18 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isFirstLoading = true;
   bool isLoadingMore = false;
 
-  List<HomeAlbumItem> albums = [];
+  List<AlbumPaginateItem> albums = [];
   Set<String> albumIds = {};
 
   late ScrollController _scrollController;
 
   Future<void> _loadFirst() async {
     if (!isFirstLoading) return;
-    Map<String, dynamic> resultJson =
-        await getPaginate(context, currentPage, perPage);
+    final result = await getPaginate(context, currentPage, perPage);
+    if (result == null) return;
     setState(() {
-      totalPage = resultJson['totalpages'];
-      pushAlbums(resultJson['tracklists']);
+      totalPage = result.totalPages;
+      pushAlbums(result.albums);
       isFirstLoading = false;
     });
   }
@@ -67,13 +71,21 @@ class _HomeScreenState extends State<HomeScreen> {
         currentPage++;
         isLoadingMore = true;
       });
-      Map<String, dynamic> resultJson =
-          await getPaginate(context, currentPage, perPage);
+      final result = await getPaginate(context, currentPage, perPage);
+      if (result == null) return;
       setState(() {
-        pushAlbums(resultJson['tracklists']);
+        pushAlbums(result.albums);
         isLoadingMore = false;
       });
     }
+  }
+
+  Future<void> _refresh() async {
+    final result = await getPaginate(context, 1, perPage);
+    if (result == null) return;
+    setState(() {
+      insertAlbumsHead(result.albums);
+    });
   }
 
   @override
@@ -103,24 +115,25 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  void pushAlbums(List<dynamic> jsons) {
-    for (var json in jsons) {
-      if (albumIds.contains(json['id'])) continue;
-      albumIds.add(json['id']);
-      albums.add(HomeAlbumItem.fromJson(json));
+  void pushAlbums(List<AlbumPaginateItem> _albums) {
+    for (var album in _albums) {
+      if (albumIds.contains(album.id)) continue;
+      albumIds.add(album.id);
+      albums.add(album);
     }
   }
 
-  void insertAlbumsHead(List<dynamic> jsons) {
-    for (var json in jsons) {
-      if (albumIds.contains(json['id'])) continue;
-      albumIds.add(json['id']);
-      albums.insert(0, HomeAlbumItem.fromJson(json));
+  void insertAlbumsHead(List<AlbumPaginateItem> _albums) {
+    for (var album in _albums) {
+      if (albumIds.contains(album.id)) continue;
+      albumIds.add(album.id);
+      albums.insert(0, album);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     Size size = MediaQuery.of(context).size;
     return Scrollbar(
       child: NestedScrollView(
@@ -128,8 +141,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 SliverAppBar(
                   backgroundColor: const Color.fromARGB(255, 255, 255, 255),
                   centerTitle: true,
-                  title:
-                      const Text("Home", style: TextStyle(color: Colors.black)),
+                  title: const Text("新着アルバム",
+                      style: TextStyle(color: Colors.black)),
                   pinned: true,
                   shape: const Border(
                       bottom: BorderSide(
@@ -152,13 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
           body: isFirstLoading
               ? const Center(child: CircularProgressIndicator())
               : RefreshIndicator(
-                  onRefresh: () async {
-                    Map<String, dynamic> resultJson =
-                        await getPaginate(context, 1, perPage);
-                    setState(() {
-                      insertAlbumsHead(resultJson['tracklists']);
-                    });
-                  },
+                  onRefresh: _refresh,
                   child: ListView(
                     controller: _scrollController,
                     children: [

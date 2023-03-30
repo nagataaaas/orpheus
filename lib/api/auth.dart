@@ -56,7 +56,8 @@ class Auth {
     credentials.AccessKey.set(accessKey);
     credentials.SecretKey.set(secretKey);
     credentials.Subscriber.set(subscriber);
-    credentials.SubscriptionExpiresAt.set(subscriptionExpiresAt);
+    DateTime subscriptionExpiresAtDate = DateTime.parse(subscriptionExpiresAt);
+    credentials.SubscriptionExpiresAt.set(subscriptionExpiresAtDate);
     return true;
   }
 
@@ -94,7 +95,8 @@ class Auth {
     credentials.AccessKey.set(accessKey);
     credentials.SecretKey.set(secretKey);
     credentials.Subscriber.set(subscriber);
-    credentials.SubscriptionExpiresAt.set(subscriptionExpiresAt);
+    DateTime subscriptionExpiresAtDate = DateTime.parse(subscriptionExpiresAt);
+    credentials.SubscriptionExpiresAt.set(subscriptionExpiresAtDate);
     return true;
   }
 }

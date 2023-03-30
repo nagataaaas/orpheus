@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 
 class CommonColors {
-  static Color primaryTextColor = const Color.fromARGB(255, 255, 255, 255);
-  static Color secondaryTextColor = const Color.fromARGB(255, 206, 206, 206);
+  static Color primaryTextColor = const Color(0xffffff);
+  static Color secondaryTextColor = const Color(0xffe7edff);
 
   static Color linkTextColor = const Color.fromARGB(255, 0, 215, 243);
 
-  static Color primaryDarkTextColor = const Color.fromARGB(255, 0, 0, 0);
-  static Color secondaryDarkTextColor = const Color.fromARGB(255, 59, 59, 59);
+  static Color primaryDarkTextColor = const Color(0xff212635);
+  static Color secondaryDarkTextColor = const Color(0xff2f304c);
 
-  static Color themaPrimaryColor = const Color.fromARGB(255, 5, 18, 26);
-  static Color themaSecondayColor = const Color.fromARGB(255, 122, 132, 133);
-  static Color themaPrimaryAccentColor =
-      const Color.fromARGB(255, 94, 177, 180);
-  static Color themaSecondaryAccentColor =
-      const Color.fromARGB(255, 111, 180, 94);
+  static Color primaryThemeColor = const Color(0xff454d66);
+  static Color secondaryThemeColor = const Color(0xff2f304c);
+  static Color primaryThemeAccentColor = const Color(0xff309975);
+  static Color secondaryThemeAccentColor = const Color(0xff58b368);
+  static Color tertiaryThemeAccentColor = const Color(0xffdad873);
+
+  static Color playButtonColor = Color(0xffdad873);
 }

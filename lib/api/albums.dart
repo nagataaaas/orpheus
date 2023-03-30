@@ -1,13 +1,22 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:orpheus_client/api/common.dart' as common;
+import 'package:orpheus_client/components/album_paginate_item.dart';
 import 'package:orpheus_client/exeptions.dart';
 import 'package:http/http.dart' as http;
+import 'package:orpheus_client/storage/sqlite.dart';
+
+class AlbumsGetResponse {
+  final List<AlbumPaginateItem> albums;
+  final int totalPages;
+
+  AlbumsGetResponse(this.albums, this.totalPages);
+}
 
 class Albums {
-  static Future<http.Response> get({int page = 1, perPage = 20}) async {
+  static Future<AlbumsGetResponse?> get({int page = 1, perPage = 20}) async {
     const url = '${common.apiPrefix}/Album';
-    Map<String, dynamic> json;
     http.Response? response;
     try {
       response = await common.get(
@@ -25,6 +34,38 @@ class Albums {
       log("[Albums.get] Need Login. status code: ${response?.statusCode}, body: ${response?.body}");
       throw NeedLoginException;
     }
-    return response;
+    try {
+      final json = jsonDecode(response.body);
+      final albums = json['tracklists']
+          .map((json) => AlbumPaginateItem.fromJson(json))
+          .toList()
+          .cast<AlbumPaginateItem>() as List<AlbumPaginateItem>;
+      final totalPages = json['totalpages'];
+      return AlbumsGetResponse(albums, totalPages);
+    } on FormatException {
+      log("[Albums.get] Failed to parse json. status code: ${response.statusCode}, body: ${response.body}");
+    }
+  }
+
+  static Future<Album?> show(String id) async {
+    final url = '${common.apiPrefix}/Album/$id';
+    Map<String, dynamic> json;
+    http.Response? response;
+    try {
+      response = await common.get(url, {}, true);
+      if (response.statusCode != 200) {
+        log("[Albums.show] Something went wrong. status code: ${response.statusCode}, body: ${response.body}");
+        throw TemporaryException;
+      }
+    } on NeedLoginException {
+      log("[Albums.show] Need Login. status code: ${response?.statusCode}, body: ${response?.body}");
+      throw NeedLoginException;
+    }
+    try {
+      final json = jsonDecode(response.body);
+      return Album.fromJson(json);
+    } on FormatException catch (e) {
+      log("[Albums.show] Failed to parse json. ${e.message}; status code: ${response.statusCode}, body: ${response.body}");
+    }
   }
 }

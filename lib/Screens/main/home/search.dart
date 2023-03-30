@@ -1,13 +1,4 @@
-import 'dart:developer';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:orpheus_client/api/albums.dart' as albumsApi;
-import 'package:orpheus_client/exeptions.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:orpheus_client/components/home_album_item.dart';
 import 'package:orpheus_client/navigator.dart';
 import 'package:orpheus_client/storage/search_history.dart';
 import 'package:orpheus_client/Screens/main/home/search_result.dart';
@@ -20,6 +11,7 @@ class HomeSearchArguments {
 class HomeSearchScreen extends StatefulWidget {
   final HomeSearchArguments? arguments;
   const HomeSearchScreen({super.key, this.arguments});
+
   @override
   _HomeSearchScreenState createState() => _HomeSearchScreenState();
 }
@@ -46,6 +38,7 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
+
     return NestedScrollView(
         headerSliverBuilder: (context, innerBoxScrolled) => [
               SliverAppBar(
@@ -63,49 +56,63 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                           borderRadius: BorderRadius.circular(20)),
                       child: Padding(
                         padding: const EdgeInsets.only(left: 15),
-                        child: TextFormField(
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter some text';
+                        child: Focus(
+                          onFocusChange: (value) {
+                            if (value) {
+                              setState(() {
+                                SearchHistory.get().then((value) => {
+                                      history = value,
+                                    });
+                              });
                             }
-                            if (RegExp(r'^[ 　]+$').hasMatch(value)) {
-                              return 'Please enter some text';
-                            }
-                            return null;
                           },
-                          controller: _searchTextController,
-                          autofocus: true,
-                          decoration: InputDecoration(
-                              border: InputBorder.none,
-                              hintText: "曲名・人名・アルバム名",
-                              suffixIcon: GestureDetector(
-                                  onTap: () => {_searchTextController.clear()},
-                                  child: const Icon(Icons.clear,
-                                      color: Colors.black))),
-                          onFieldSubmitted: (value) {
-                            if (history
-                                .any((element) => element.value == value)) {
-                              SearchHistory.touch(InputHistoryData(
-                                  value: value, createdAt: DateTime.now()));
-                            } else {
+                          child: TextFormField(
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter some text';
+                              }
+                              if (RegExp(r'^[ 　]+$').hasMatch(value)) {
+                                return 'Please enter some text';
+                              }
+                              return null;
+                            },
+                            controller: _searchTextController,
+                            autofocus: true,
+                            decoration: InputDecoration(
+                                border: InputBorder.none,
+                                hintText: "曲名・人名・アルバム名",
+                                suffixIcon: GestureDetector(
+                                    onTap: () =>
+                                        {_searchTextController.clear()},
+                                    child: const Icon(Icons.clear,
+                                        color: Colors.black))),
+                            onFieldSubmitted: (value) {
+                              if (history
+                                  .any((element) => element.value == value)) {
+                                SearchHistory.touch(InputHistoryData(
+                                    value: value, createdAt: DateTime.now()));
+                              } else {
+                                SearchHistory.add(value);
+                              }
                               SearchHistory.add(value);
-                            }
-                            SearchHistory.add(value);
-                            setState(() {
-                              SearchHistory.get().then((value) => {
-                                    history = value,
-                                  });
-                            });
-                            Navigator.of(context).pushReplacement(
-                              MyCupertinoPageRoute(
-                                  builder: (context) => HomeSearchResultScreen(
-                                      arguments:
-                                          HomeSearchResultArguments(value)),
-                                  settings: const RouteSettings(
-                                      name: '/home/search/result')),
-                            );
-                            // Navigator.pushNamed(context, '/search', arguments: value);
-                          },
+                              setState(() {
+                                SearchHistory.get().then((value) => {
+                                      history = value,
+                                    });
+                              });
+                              Navigator.of(context).pushReplacement(
+                                MyCupertinoPageRoute(
+                                    builder: (context) =>
+                                        HomeSearchResultScreen(
+                                            arguments:
+                                                HomeSearchResultArguments(
+                                                    value)),
+                                    settings: const RouteSettings(
+                                        name: '/home/search/result')),
+                              );
+                              // Navigator.pushNamed(context, '/search', arguments: value);
+                            },
+                          ),
                         ),
                       ),
                     )),

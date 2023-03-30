@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'package:orpheus_client/Screens/main/home/home.dart';
+import 'package:orpheus_client/Screens/main/home/navigation.dart';
 import 'package:orpheus_client/styles.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:orpheus_client/Screens/main/account.dart';
 
 class NavigationScreen extends StatefulWidget {
   const NavigationScreen({Key? key}) : super(key: key);
@@ -12,14 +13,36 @@ class NavigationScreen extends StatefulWidget {
 }
 
 class _NavigationScreenState extends State<NavigationScreen> {
-  static final _screens = [
-    HomeScreen(),
-    HomeScreen(),
-    HomeScreen(),
-    HomeScreen(),
+  static final _pages = [
+    HomeNavigationScreen(
+      navigatorKey: GlobalKey(),
+    ),
+    Text("bookmark"),
+    Text("playback"),
+    const AccountScreen(),
   ];
+  late PageController _pageController;
+  // static final _screens = [
+  //   HomeScreen(),
+  //   HomeScreen(),
+  //   HomeScreen(),
+  //   HomeScreen(),
+  // ];
 
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _selectedIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+
+    super.dispose();
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -30,7 +53,12 @@ class _NavigationScreenState extends State<NavigationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: _screens[_selectedIndex],
+        body: PageView(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(),
+          children: _pages,
+        ),
+        // body: _pages[_selectedIndex],
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
               color: Color.fromARGB(255, 255, 255, 255),
@@ -42,6 +70,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
             child: GNav(
               onTabChange: (value) => setState(() {
                 _selectedIndex = value;
+                _pageController.jumpToPage(_selectedIndex);
                 print(_selectedIndex);
               }),
               gap: 4,
@@ -73,20 +102,6 @@ class _NavigationScreenState extends State<NavigationScreen> {
               ],
             ),
           ),
-        )
-        // BottomNavigationBar(
-        //   currentIndex: _selectedIndex,
-        //   onTap: _onItemTapped,
-        //   selectedItemColor: CommonColors.themaSecondaryAccentColor,
-        //   items: const <BottomNavigationBarItem>[
-        //     BottomNavigationBarItem(icon: Icon(Icons.home), label: 'ホーム'),
-        //     BottomNavigationBarItem(
-        //         icon: Icon(Icons.bookmark), label: 'ブックマーク'),
-        //     BottomNavigationBarItem(icon: Icon(Icons.play_arrow), label: '再生'),
-        //     BottomNavigationBarItem(icon: Icon(Icons.person), label: 'アカウント'),
-        //   ],
-        //   type: BottomNavigationBarType.fixed,
-        // )
-        );
+        ));
   }
 }

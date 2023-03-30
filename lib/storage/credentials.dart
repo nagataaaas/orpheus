@@ -36,6 +36,19 @@ class _BaseSecureStorage {
   }
 }
 
+Future<void> clearAll() async {
+  await _storage.deleteAll();
+}
+
+Future<void> clearCredentials() async {
+  // clear only AccessKey, SecretKey, Subscriber, SubscriptionExpiresAt
+  // keep UserName, Password, RememberMe, DeviceId
+  await _storage.delete(key: _KEY_ACCESSKEY);
+  await _storage.delete(key: _KEY_SECRETKEY);
+  await _storage.delete(key: _KEY_SUBSCRIBER);
+  await _storage.delete(key: _KEY_SUBSCRIPTION_EXPIRES_AT);
+}
+
 class AccessKey {
   static String key = _KEY_ACCESSKEY;
 
@@ -132,11 +145,15 @@ class Subscriber extends _BaseSecureStorage {
 class SubscriptionExpiresAt extends _BaseSecureStorage {
   static String key = _KEY_SUBSCRIPTION_EXPIRES_AT;
 
-  static Future<String?> get() async {
-    return await _BaseSecureStorage.get(key);
+  static Future<DateTime?> get() async {
+    var data = await _BaseSecureStorage.get(key);
+    if (data == null) {
+      return null;
+    }
+    return DateTime.parse(data);
   }
 
-  static Future<void> set(String? value) async {
-    _BaseSecureStorage.set(key, value);
+  static Future<void> set(DateTime? value) async {
+    _BaseSecureStorage.set(key, value?.toIso8601String());
   }
 }

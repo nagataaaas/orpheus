@@ -8,9 +8,10 @@ import 'package:orpheus_client/api/search/albums.dart' as albumsSearchApi;
 import 'package:orpheus_client/exeptions.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:orpheus_client/components/search_album_item.dart';
+import 'package:orpheus_client/components/search_album_paginate_item.dart';
 import 'package:orpheus_client/navigator.dart';
 import 'package:orpheus_client/storage/search_history.dart';
+import 'navigation.dart' show HomeScreenChildBase;
 
 class HomeSearchResultArguments {
   final String searchText;
@@ -25,27 +26,31 @@ class HomeSearchResultScreen extends StatefulWidget {
   _HomeSearchResultScreenState createState() => _HomeSearchResultScreenState();
 }
 
-Future<Map<String, dynamic>> getPaginate(
+Future<albumsSearchApi.SearchAlbumsGetResponse?> getPaginate(
     BuildContext context, String query, int page, perPage) async {
-  http.Response? response;
-  Map<String, dynamic>? resultJson;
+  late albumsSearchApi.SearchAlbumsGetResponse? result;
   try {
-    response = await albumsSearchApi.SearchAlbums.get(query,
+    result = await albumsSearchApi.SearchAlbums.get(query,
         page: page, perPage: perPage);
-    resultJson = jsonDecode(response.body);
+    if (result == null) {
+      throw const FormatException();
+    }
   } on NeedLoginException {
     Navigator.pushReplacementNamed(context, '/login');
   } on FormatException {
-    log("[HomeSearchResultScreen.getPaginate] Failed to parse json. status code: ${response?.statusCode}, body: ${response?.body}");
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text("ロードに失敗しました"),
       backgroundColor: Colors.red,
     ));
   }
-  return resultJson!;
+  return result;
 }
 
-class _HomeSearchResultScreenState extends State<HomeSearchResultScreen> {
+class _HomeSearchResultScreenState extends State<HomeSearchResultScreen>
+    with AutomaticKeepAliveClientMixin<HomeSearchResultScreen> {
+  @override
+  bool get wantKeepAlive => true;
+
   String _searchText = '';
   bool isFirstLoading = true;
   bool isLoadingMore = false;
@@ -54,18 +59,19 @@ class _HomeSearchResultScreenState extends State<HomeSearchResultScreen> {
   int perPage = 20;
   late int totalPage;
 
-  List<SearchAlbumItem> albums = [];
+  List<SearchAlbumPaginateItem> albums = [];
   Set<String> albumIds = {};
 
   late ScrollController _scrollController;
 
   Future<void> _loadFirst() async {
     if (!isFirstLoading) return;
-    Map<String, dynamic> resultJson =
+    final result =
         await getPaginate(context, _searchText, currentPage, perPage);
+    if (result == null) return;
     setState(() {
-      totalPage = resultJson['totalpages'];
-      pushAlbums(resultJson['tracklists']);
+      totalPage = result.totalPages;
+      pushAlbums(result.albums);
       isFirstLoading = false;
     });
   }
@@ -77,11 +83,11 @@ class _HomeSearchResultScreenState extends State<HomeSearchResultScreen> {
         currentPage++;
         isLoadingMore = true;
       });
-      Map<String, dynamic> resultJson =
+      final result =
           await getPaginate(context, _searchText, currentPage, perPage);
-      print(resultJson);
+      if (result == null) return;
       setState(() {
-        pushAlbums(resultJson['tracklists']);
+        pushAlbums(result.albums);
         isLoadingMore = false;
       });
     }
@@ -101,20 +107,19 @@ class _HomeSearchResultScreenState extends State<HomeSearchResultScreen> {
     _loadFirst();
   }
 
-  void pushAlbums(List<dynamic> jsons) {
-    for (var json in jsons) {
-      if (albumIds.contains(json['id'])) continue;
-      albumIds.add(json['id']);
-      albums.add(SearchAlbumItem.fromJson(json));
+  void pushAlbums(List<SearchAlbumPaginateItem> _albums) {
+    for (var album in _albums) {
+      if (albumIds.contains(album.id)) continue;
+      albumIds.add(album.id);
+      albums.add(album);
     }
   }
 
-  // TODO: searchとページ統合
-  // TODO: Stackする
-
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     Size size = MediaQuery.of(context).size;
+
     return NestedScrollView(
         headerSliverBuilder: (context, innerBoxScrolled) => [
               SliverAppBar(
@@ -147,7 +152,6 @@ class _HomeSearchResultScreenState extends State<HomeSearchResultScreen> {
                           },
                           decoration: InputDecoration(
                               border: InputBorder.none,
-                              hintText: "曲名・人名・アルバム名",
                               suffixIcon: GestureDetector(
                                   onTap: () => {
                                         Navigator.of(context).push(
