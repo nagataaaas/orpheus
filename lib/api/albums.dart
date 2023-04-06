@@ -48,6 +48,10 @@ class Albums {
   }
 
   static Future<Album?> show(String id) async {
+    // await DatabaseHelper.setDatabase();
+    if (await isAlbumCached(id)) {
+      return await loadAlbum(id);
+    }
     final url = '${common.apiPrefix}/Album/$id';
     Map<String, dynamic> json;
     http.Response? response;
@@ -63,7 +67,9 @@ class Albums {
     }
     try {
       final json = jsonDecode(response.body);
-      return Album.fromJson(json);
+      final album = Album.fromJson(json);
+      saveAlbum(album);
+      return album;
     } on FormatException catch (e) {
       log("[Albums.show] Failed to parse json. ${e.message}; status code: ${response.statusCode}, body: ${response.body}");
     }

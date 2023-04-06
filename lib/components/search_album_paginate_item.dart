@@ -82,12 +82,17 @@ class SearchAlbumPaginateItem extends StatelessWidget {
                   child: Stack(
                     children: [
                       Text(title,
-                          style: const TextStyle(fontSize: 14, height: 1.2)),
+                          style: TextStyle(
+                              fontSize: 14,
+                              height: 1.2,
+                              color: CommonColors.secondaryTextColor)),
                       Positioned(
                           bottom: 0,
                           right: 0,
                           child: Text(labelDescription,
-                              style: const TextStyle(fontSize: 15))),
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  color: CommonColors.secondaryTextColor))),
                     ],
                   ),
                 )),

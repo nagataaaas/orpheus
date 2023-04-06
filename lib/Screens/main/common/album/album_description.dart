@@ -6,13 +6,19 @@ import 'package:orpheus_client/components/skelton_text.dart';
 class AlbumDescription extends StatelessWidget {
   final String? title;
   final String? label;
-  final Future<dynamic> Function() onTapAction;
+  final Function() showDescription;
+  final Function() addToPlaylist;
+  final Function() addToQueue;
+  final Function() playShuffle;
 
   const AlbumDescription({
     Key? key,
     required this.title,
     required this.label,
-    required this.onTapAction,
+    required this.showDescription,
+    required this.addToPlaylist,
+    required this.addToQueue,
+    required this.playShuffle,
   }) : super(key: key);
 
   @override
@@ -41,7 +47,7 @@ class AlbumDescription extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               GestureDetector(
-                onTap: onTapAction,
+                onTap: showDescription,
                 child: Column(
                   children: [
                     title == null
@@ -78,20 +84,42 @@ class AlbumDescription extends StatelessWidget {
               Row(
                 children: [
                   IconButton(
-                      onPressed: () {},
+                      onPressed: addToPlaylist,
+                      tooltip: "プレイリストに追加",
                       icon: const Icon(
-                        // TODO: create bookmark
-                        Icons.bookmark_add_outlined,
+                        Icons.playlist_add_rounded,
                         color: Colors.white,
                       )),
-                  Container(
-                    width: 15,
+                  const SizedBox(
+                    width: 10,
                   ),
-                  // tap to open description icon
-                  const Icon(
-                    Icons.info_outline_rounded,
-                    color: Colors.white,
-                  )
+                  IconButton(
+                      onPressed: addToQueue,
+                      tooltip: "キューに追加",
+                      icon: const Icon(
+                        Icons.queue_music_rounded,
+                        color: Colors.white,
+                      )),
+                  const SizedBox(
+                    width: 10,
+                  ),
+                  IconButton(
+                      onPressed: playShuffle,
+                      tooltip: "シャッフル再生",
+                      icon: const Icon(
+                        Icons.shuffle_rounded,
+                        color: Colors.white,
+                      )),
+                  const SizedBox(
+                    width: 10,
+                  ),
+                  IconButton(
+                      onPressed: showDescription,
+                      tooltip: "詳細を表示",
+                      icon: const Icon(
+                        Icons.info_outline_rounded,
+                        color: Colors.white,
+                      )),
                 ],
               )
             ],

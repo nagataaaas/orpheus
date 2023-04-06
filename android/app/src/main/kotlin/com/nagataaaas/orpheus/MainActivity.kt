@@ -1,4 +1,4 @@
-package com.example.orpheus_client
+package com.nagataaaas.orpheus
 
 import io.flutter.embedding.android.FlutterActivity
 

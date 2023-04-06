@@ -49,7 +49,7 @@ class AlbumPaginateItem extends StatelessWidget {
           style: ElevatedButton.styleFrom(
               backgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
-              foregroundColor: CommonColors.primaryDarkTextColor,
+              foregroundColor: CommonColors.primaryThemeColor,
               elevation: 0),
           onPressed: () {
             Navigator.of(context).push(

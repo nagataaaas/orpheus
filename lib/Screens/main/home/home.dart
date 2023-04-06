@@ -9,6 +9,7 @@ import 'package:orpheus_client/exeptions.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:orpheus_client/components/album_paginate_item.dart';
+import 'package:orpheus_client/styles.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -135,48 +136,56 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     super.build(context);
     Size size = MediaQuery.of(context).size;
-    return Scrollbar(
-      child: NestedScrollView(
-          headerSliverBuilder: (context, innerBoxScrolled) => [
-                SliverAppBar(
-                  backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-                  centerTitle: true,
-                  title: const Text("新着アルバム",
-                      style: TextStyle(color: Colors.black)),
-                  pinned: true,
-                  shape: const Border(
-                      bottom: BorderSide(
-                          color: Color.fromARGB(255, 231, 231, 231), width: 1)),
-                  actions: [
-                    IconButton(
-                        onPressed: () {
-                          Navigator.push(
-                              context,
-                              MyCupertinoPageRoute(
-                                  builder: (context) => HomeSearchScreen(),
-                                  settings: const RouteSettings(
-                                      name: '/home/search')));
-                        },
-                        icon: const Icon(Icons.search_outlined,
-                            color: Colors.black))
-                  ],
-                )
-              ],
-          body: isFirstLoading
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-                  onRefresh: _refresh,
-                  child: ListView(
-                    controller: _scrollController,
-                    children: [
-                      ...albums,
-                      if (isLoadingMore)
-                        const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 50),
-                            child: Center(child: CircularProgressIndicator()))
+
+    return Container(
+      color: CommonColors.primaryThemeDarkColor,
+      child: Scrollbar(
+        child: NestedScrollView(
+            headerSliverBuilder: (context, innerBoxScrolled) => [
+                  SliverAppBar(
+                    backgroundColor: CommonColors.primaryThemeDarkColor,
+                    centerTitle: true,
+                    title: Text("新着アルバム",
+                        style:
+                            TextStyle(color: CommonColors.secondaryTextColor)),
+                    pinned: true,
+                    shape: Border(
+                        bottom: BorderSide(
+                            color: CommonColors.secondaryThemeDarkColor,
+                            width: 1)),
+                    actions: [
+                      IconButton(
+                          onPressed: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const HomeSearchScreen(),
+                                    settings: const RouteSettings(
+                                        name: '/home/search')));
+                          },
+                          icon: Icon(Icons.search_outlined,
+                              color: CommonColors.primaryThemeColor))
                     ],
-                  ),
-                )),
+                  )
+                ],
+            body: isFirstLoading
+                ? const Center(child: CircularProgressIndicator())
+                : RefreshIndicator(
+                    onRefresh: _refresh,
+                    child: ListView(
+                      padding: const EdgeInsets.only(top: 10),
+                      controller: _scrollController,
+                      children: [
+                        ...albums,
+                        if (isLoadingMore)
+                          const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 50),
+                              child: Center(child: CircularProgressIndicator()))
+                      ],
+                    ),
+                  )),
+      ),
     );
   }
 }

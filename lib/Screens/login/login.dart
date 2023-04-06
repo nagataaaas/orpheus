@@ -79,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         fontWeight: FontWeight.bold,
                                         fontSize: 36,
                                         color: styles
-                                            .CommonColors.primaryTextColor),
+                                            .CommonColors.secondaryTextColor),
                                   ),
                                   Container(
                                     margin: const EdgeInsets.only(top: 50),
@@ -90,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           style: TextStyle(
                                               fontSize: 12,
                                               color: styles.CommonColors
-                                                  .primaryTextColor)),
+                                                  .secondaryTextColor)),
                                       TextSpan(
                                         text: "利用規約",
                                         style: TextStyle(
@@ -107,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           style: TextStyle(
                                               fontSize: 12,
                                               color: styles.CommonColors
-                                                  .primaryTextColor)),
+                                                  .secondaryTextColor)),
                                       TextSpan(
                                         text: "プライバシーポリシー",
                                         style: TextStyle(
@@ -124,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           style: TextStyle(
                                               fontSize: 12,
                                               color: styles.CommonColors
-                                                  .primaryTextColor)),
+                                                  .secondaryTextColor)),
                                     ])),
                                   ),
                                   Container(
@@ -134,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       style: TextStyle(
                                           fontSize: 12,
                                           color: styles
-                                              .CommonColors.primaryTextColor),
+                                              .CommonColors.secondaryTextColor),
                                     ),
                                   ),
                                   // username textfield using TextEditingController usernameController
@@ -149,23 +149,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                           credentials.usernameController,
                                       style: TextStyle(
                                           color: styles
-                                              .CommonColors.primaryTextColor),
+                                              .CommonColors.secondaryTextColor),
                                       decoration: InputDecoration(
                                         labelText: "ユーザー名",
                                         fillColor: styles
-                                            .CommonColors.primaryTextColor,
+                                            .CommonColors.secondaryTextColor,
                                         labelStyle: TextStyle(
-                                            color: styles
-                                                .CommonColors.primaryTextColor),
+                                            color: styles.CommonColors
+                                                .secondaryTextColor),
                                         enabledBorder: OutlineInputBorder(
                                           borderSide: BorderSide(
                                               color: styles.CommonColors
-                                                  .primaryTextColor),
+                                                  .primaryThemeColor),
                                         ),
                                         focusedBorder: OutlineInputBorder(
                                           borderSide: BorderSide(
                                               color: styles.CommonColors
-                                                  .primaryTextColor),
+                                                  .primaryThemeColor),
                                         ),
                                       ),
                                     ),
@@ -182,24 +182,24 @@ class _LoginScreenState extends State<LoginScreen> {
                                           credentials.passwordController,
                                       style: TextStyle(
                                           color: styles
-                                              .CommonColors.primaryTextColor),
+                                              .CommonColors.secondaryTextColor),
                                       obscureText: obscurePassword,
                                       decoration: InputDecoration(
                                         labelText: "パスワード",
                                         fillColor: styles
-                                            .CommonColors.primaryTextColor,
+                                            .CommonColors.secondaryTextColor,
                                         labelStyle: TextStyle(
-                                            color: styles
-                                                .CommonColors.primaryTextColor),
+                                            color: styles.CommonColors
+                                                .secondaryTextColor),
                                         enabledBorder: OutlineInputBorder(
                                           borderSide: BorderSide(
                                               color: styles.CommonColors
-                                                  .primaryTextColor),
+                                                  .primaryThemeColor),
                                         ),
                                         focusedBorder: OutlineInputBorder(
                                           borderSide: BorderSide(
                                               color: styles.CommonColors
-                                                  .primaryTextColor),
+                                                  .primaryThemeColor),
                                         ),
                                         suffixIcon: IconButton(
                                           icon: Icon(
@@ -207,7 +207,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 ? Icons.visibility
                                                 : Icons.visibility_off,
                                             color: styles
-                                                .CommonColors.primaryTextColor,
+                                                .CommonColors.primaryThemeColor,
                                           ),
                                           onPressed: () {
                                             setState(() {
@@ -227,17 +227,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                         .CommonColors.primaryThemeAccentColor,
                                     // white border and blue checkmark on checked
                                     checkColor:
-                                        styles.CommonColors.primaryTextColor,
+                                        styles.CommonColors.primaryThemeColor,
                                     side: BorderSide(
                                         color: styles
-                                            .CommonColors.primaryTextColor,
+                                            .CommonColors.primaryThemeColor,
                                         width: 1),
                                     title: Text(
                                       "Remember me",
                                       style: TextStyle(
                                           fontSize: 12,
                                           color: styles
-                                              .CommonColors.primaryTextColor),
+                                              .CommonColors.secondaryTextColor),
                                     ),
                                     value: rememberMe,
                                     onChanged: (value) {
@@ -323,7 +323,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 style: TextStyle(
                                                     fontSize: 20,
                                                     color: styles.CommonColors
-                                                        .primaryTextColor)),
+                                                        .primaryThemeColor)),
                                           ),
                                   ),
                                 ]),
@@ -336,6 +336,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
 void showDialogueModal(context, filePath) {
   showModalBottomSheet<void>(
+    backgroundColor: styles.CommonColors.primaryTextColor,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
@@ -343,39 +344,46 @@ void showDialogueModal(context, filePath) {
     builder: (BuildContext context) {
       return FractionallySizedBox(
         widthFactor: 0.9,
-        child: Container(
-            color: styles.CommonColors.primaryTextColor,
-            child: Column(
-              children: [
-                // close button on right top
-                Container(
-                  alignment: Alignment.topRight,
-                  padding: const EdgeInsets.only(top: 10),
-                  child: IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
+        child: Column(
+          children: [
+            // close button on right top
 
-                // terms of service
-                Expanded(
-                    child: FutureBuilder(
-                        future:
-                            Future.delayed(const Duration(milliseconds: 150))
-                                .then((value) {
-                          return rootBundle.loadString(filePath);
-                        }),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasData) {
-                            return Markdown(
-                              data: snapshot.data!,
-                            );
-                          }
-                          return const Center(
-                              child: CupertinoActivityIndicator());
-                        })),
-              ],
-            )),
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Container(
+                height: 5,
+                width: 50,
+                decoration: BoxDecoration(
+                    color: styles.CommonColors.secondaryThemeDarkColor,
+                    borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            Container(
+              alignment: Alignment.topRight,
+              padding: const EdgeInsets.only(top: 10),
+              child: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+
+            // terms of service
+            Expanded(
+                child: FutureBuilder(
+                    future: Future.delayed(const Duration(milliseconds: 150))
+                        .then((value) {
+                      return rootBundle.loadString(filePath);
+                    }),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        return Markdown(
+                          data: snapshot.data!,
+                        );
+                      }
+                      return const Center(child: CupertinoActivityIndicator());
+                    })),
+          ],
+        ),
       );
     },
   );

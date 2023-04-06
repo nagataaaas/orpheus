@@ -1,33 +1,38 @@
 import 'package:flutter/material.dart';
 
 import 'package:orpheus_client/Screens/main/home/navigation.dart';
+import 'package:orpheus_client/Screens/main/playback/bottom_playback_bar.dart';
+import 'package:orpheus_client/Screens/main/playback/navigation.dart';
+import 'package:orpheus_client/Screens/main/playlist/navigation.dart';
+import 'package:orpheus_client/providers/play_state.dart';
 import 'package:orpheus_client/styles.dart';
-import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:orpheus_client/Screens/main/account.dart';
+import 'package:provider/provider.dart';
 
 class NavigationScreen extends StatefulWidget {
   const NavigationScreen({Key? key}) : super(key: key);
 
   @override
-  State<NavigationScreen> createState() => _NavigationScreenState();
+  State<NavigationScreen> createState() => NavigationScreenState();
 }
 
-class _NavigationScreenState extends State<NavigationScreen> {
-  static final _pages = [
+class NavigationScreenState extends State<NavigationScreen> {
+  final homeNavigationNavigationKey = GlobalKey<NavigatorState>();
+  final playlistNavigationNavigationKey = GlobalKey<NavigatorState>();
+  final playbackNavigationNavigationKey = GlobalKey<NavigatorState>();
+  late final _pages = [
     HomeNavigationScreen(
-      navigatorKey: GlobalKey(),
+      navigatorKey: homeNavigationNavigationKey,
     ),
-    Text("bookmark"),
-    Text("playback"),
+    PlaylistNavigationScreen(
+      navigatorKey: playlistNavigationNavigationKey,
+    ),
+    PlaybackNavigationScreen(
+      navigatorKey: playbackNavigationNavigationKey,
+    ),
     const AccountScreen(),
   ];
   late PageController _pageController;
-  // static final _screens = [
-  //   HomeScreen(),
-  //   HomeScreen(),
-  //   HomeScreen(),
-  //   HomeScreen(),
-  // ];
 
   int _selectedIndex = 0;
 
@@ -44,64 +49,105 @@ class _NavigationScreenState extends State<NavigationScreen> {
     super.dispose();
   }
 
-  void _onItemTapped(int index) {
+  void setIndex(int index) {
     setState(() {
       _selectedIndex = index;
+      _pageController.jumpToPage(_selectedIndex);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: PageView(
-          controller: _pageController,
-          physics: const NeverScrollableScrollPhysics(),
-          children: _pages,
-        ),
-        // body: _pages[_selectedIndex],
-        bottomNavigationBar: Container(
-          decoration: BoxDecoration(
-              color: Color.fromARGB(255, 255, 255, 255),
-              border: Border(
-                  top: BorderSide(
-                      color: Color.fromARGB(255, 202, 202, 202), width: 0.5))),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: GNav(
-              onTabChange: (value) => setState(() {
-                _selectedIndex = value;
-                _pageController.jumpToPage(_selectedIndex);
-                print(_selectedIndex);
-              }),
-              gap: 4,
-              backgroundColor: Color.fromARGB(255, 255, 255, 255),
-              tabBackgroundColor: Color.fromARGB(255, 131, 131, 131),
-              padding: EdgeInsets.all(16),
-              color: Color.fromARGB(255, 126, 126, 126),
-              activeColor: Color.fromARGB(255, 255, 255, 255),
-              tabs: [
-                GButton(
-                    icon:
-                        _selectedIndex == 0 ? Icons.home : Icons.home_outlined,
-                    text: 'ホーム'),
-                GButton(
-                    icon: _selectedIndex == 1
-                        ? Icons.bookmark
-                        : Icons.bookmark_outline,
-                    text: 'ブックマーク'),
-                GButton(
-                    icon: _selectedIndex == 2
-                        ? Icons.play_arrow
-                        : Icons.play_arrow_outlined,
-                    text: '再生'),
-                GButton(
-                    icon: _selectedIndex == 3
-                        ? Icons.person
-                        : Icons.person_outlined,
-                    text: 'アカウント'),
-              ],
-            ),
+    final size = MediaQuery.of(context).size;
+    final iconSize = AppBar().preferredSize.height * 0.5;
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => PlayState()),
+      ],
+      child: Scaffold(
+          body: PageView(
+            controller: _pageController,
+            physics: const NeverScrollableScrollPhysics(),
+            children: _pages,
           ),
-        ));
+          bottomNavigationBar: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_selectedIndex != 2)
+                BottomPlayBackBar(onTap: () {
+                  setState(() {
+                    setIndex(2);
+                  });
+                }),
+              Container(
+                decoration: BoxDecoration(
+                    color: CommonColors.primaryThemeDarkColor,
+                    border: Border(
+                        top: BorderSide(
+                            color: CommonColors.secondaryThemeDarkColor,
+                            width: 0.5))),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      canvasColor: CommonColors.primaryThemeDarkColor,
+                    ),
+                    child: BottomNavigationBar(
+                        currentIndex: _selectedIndex,
+                        selectedItemColor: CommonColors.primaryThemeColor,
+                        unselectedItemColor: CommonColors.secondaryThemeColor,
+                        selectedLabelStyle: const TextStyle(fontSize: 12),
+                        onTap: (index) {
+                          if (index == _selectedIndex) {
+                            switch (index) {
+                              case 0:
+                                homeNavigationNavigationKey.currentState!
+                                    .popUntil((route) => route.isFirst);
+                                break;
+                              case 1:
+                                playlistNavigationNavigationKey.currentState!
+                                    .popUntil((route) => route.isFirst);
+                                break;
+                              case 2:
+                                playbackNavigationNavigationKey.currentState!
+                                    .popUntil((route) => route.isFirst);
+                                break;
+                            }
+                          } else {
+                            setState(() {
+                              _selectedIndex = index;
+                              _pageController.jumpToPage(_selectedIndex);
+                            });
+                          }
+                        },
+                        items: const [
+                          BottomNavigationBarItem(
+                              icon: Icon(Icons.home_outlined),
+                              activeIcon: Icon(Icons.home),
+                              label: "ホーム",
+                              tooltip: "新着アルバム・検索"),
+                          BottomNavigationBarItem(
+                              icon: Icon(Icons.playlist_play_outlined),
+                              activeIcon: Icon(Icons.playlist_play),
+                              label: "プレイリスト",
+                              tooltip: "プレイリストの編集・表示"),
+                          BottomNavigationBarItem(
+                              icon: Icon(Icons.play_arrow_outlined),
+                              activeIcon: Icon(Icons.play_arrow),
+                              label: "再生",
+                              tooltip: "音楽再生コントローラー・キューの確認"),
+                          BottomNavigationBarItem(
+                              icon: Icon(Icons.person_outlined),
+                              activeIcon: Icon(Icons.person),
+                              label: "アカウント",
+                              tooltip: "アカウント情報の確認・ログアウト"),
+                        ]),
+                  ),
+                ),
+              ),
+            ],
+          )),
+    );
   }
 }

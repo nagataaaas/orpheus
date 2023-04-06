@@ -43,10 +43,13 @@ class SearchAlbums {
     }
     try {
       final json = jsonDecode(response.body);
-      final albums = json['tracklists']
-          .map((json) => SearchAlbumPaginateItem.fromJson(json))
-          .toList()
-          .cast<SearchAlbumPaginateItem>() as List<SearchAlbumPaginateItem>;
+
+      final albums = json['tracklists'] == null
+          ? <SearchAlbumPaginateItem>[]
+          : json['tracklists']
+              .map((json) => SearchAlbumPaginateItem.fromJson(json))
+              .toList()
+              .cast<SearchAlbumPaginateItem>() as List<SearchAlbumPaginateItem>;
       final totalPages = json['totalpages'];
       return SearchAlbumsGetResponse(albums, totalPages);
     } on FormatException {

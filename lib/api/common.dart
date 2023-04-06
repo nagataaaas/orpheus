@@ -40,38 +40,14 @@ String generateSignature(
 Future<http.Response> post(
     String path, Map<String, dynamic> body, bool needAuth,
     {Map<String, String> headers = const {}, int retryCount = 0}) async {
-  headers = {...headers, ...defaultHeaders};
-  if (needAuth) {
-    if (!await credentials.isLoggedIn()) {
-      if (!await credentials.RememberMe.get()) {
-        // client must not call needAuth API without login
-        throw NeedLoginException;
-      }
-      // not logged in but saves credentials
-      String username = (await credentials.UserName.get())!;
-      String password = (await credentials.Password.get())!;
-      bool success = await auth.Auth.login(username, password);
-      if (!success) {
-        // login failed
-        throw NeedLoginException;
-      }
-    }
-    headers = {
-      ...headers,
-      ...generateAuthHeader(await credentials.AccessKey.get(),
-          await credentials.SecretKey.get(), 'GET', path)
-    };
-  }
-  print(path);
-  print(headers);
-  print(body);
+  headers = await createHeader(needAuth, headers, path, 'POST');
+
   var response = await http.post(
     Uri.parse(path),
     headers: headers,
     body: jsonEncode(body),
   );
-  print(response.request?.headers);
-  print(response.request?.toString());
+
   if (needAuth &&
       (response.statusCode == HttpStatus.unauthorized ||
           (path.endsWith("/Auth/Login") &&
@@ -90,36 +66,13 @@ Future<http.Response> post(
     return post(path, body, needAuth,
         headers: headers, retryCount: retryCount + 1);
   }
-  print(response.statusCode);
-  print(response.body);
   return response;
 }
 
 Future<http.Response> get(
     String path, Map<String, dynamic> query, bool needAuth,
     {Map<String, String> headers = const {}, int retryCount = 0}) async {
-  headers = {...headers, ...defaultHeaders};
-  if (needAuth) {
-    if (!await credentials.isLoggedIn()) {
-      if (!await credentials.RememberMe.get()) {
-        // client must not call needAuth API without login
-        throw NeedLoginException;
-      }
-      // not logged in but saves credentials
-      String username = (await credentials.UserName.get())!;
-      String password = (await credentials.Password.get())!;
-      bool success = await auth.Auth.login(username, password);
-      if (!success) {
-        // login failed
-        throw NeedLoginException;
-      }
-    }
-    headers = {
-      ...headers,
-      ...generateAuthHeader(await credentials.AccessKey.get(),
-          await credentials.SecretKey.get(), 'GET', path)
-    };
-  }
+  headers = await createHeader(needAuth, headers, path, 'GET');
   Uri url = Uri.parse(path);
   url = url.replace(queryParameters: query);
   var response = await http.get(
@@ -142,4 +95,31 @@ Future<http.Response> get(
         headers: headers, retryCount: retryCount + 1);
   }
   return response;
+}
+
+Future<Map<String, String>> createHeader(
+    bool needAuth, Map<String, String> headers, String path, method) async {
+  headers = {...headers, ...defaultHeaders};
+  if (needAuth) {
+    if (!await credentials.isLoggedIn()) {
+      if (!await credentials.RememberMe.get()) {
+        // client must not call needAuth API without login
+        throw NeedLoginException;
+      }
+      // not logged in but saves credentials
+      String username = (await credentials.UserName.get())!;
+      String password = (await credentials.Password.get())!;
+      bool success = await auth.Auth.login(username, password);
+      if (!success) {
+        // login failed
+        throw NeedLoginException;
+      }
+    }
+    headers = {
+      ...headers,
+      ...generateAuthHeader(await credentials.AccessKey.get(),
+          await credentials.SecretKey.get(), method, path)
+    };
+  }
+  return headers;
 }

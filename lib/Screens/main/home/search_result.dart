@@ -11,6 +11,7 @@ import 'dart:convert';
 import 'package:orpheus_client/components/search_album_paginate_item.dart';
 import 'package:orpheus_client/navigator.dart';
 import 'package:orpheus_client/storage/search_history.dart';
+import 'package:orpheus_client/styles.dart';
 import 'navigation.dart' show HomeScreenChildBase;
 
 class HomeSearchResultArguments {
@@ -54,6 +55,7 @@ class _HomeSearchResultScreenState extends State<HomeSearchResultScreen>
   String _searchText = '';
   bool isFirstLoading = true;
   bool isLoadingMore = false;
+  bool noMoreSnackBarShown = false;
 
   int currentPage = 1;
   int perPage = 20;
@@ -78,19 +80,26 @@ class _HomeSearchResultScreenState extends State<HomeSearchResultScreen>
 
   Future<void> _loadMore() async {
     if (isLoadingMore) return;
-    if (currentPage < totalPage) {
-      setState(() {
-        currentPage++;
-        isLoadingMore = true;
-      });
-      final result =
-          await getPaginate(context, _searchText, currentPage, perPage);
-      if (result == null) return;
-      setState(() {
-        pushAlbums(result.albums);
-        isLoadingMore = false;
-      });
+    if (currentPage >= totalPage) {
+      if (noMoreSnackBarShown) return;
+      noMoreSnackBarShown = true;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("これ以上データがありません"),
+        backgroundColor: Color.fromARGB(255, 94, 168, 25),
+      ));
+      return;
     }
+    setState(() {
+      currentPage++;
+      isLoadingMore = true;
+    });
+    final result =
+        await getPaginate(context, _searchText, currentPage, perPage);
+    if (result == null) return;
+    setState(() {
+      pushAlbums(result.albums);
+      isLoadingMore = false;
+    });
   }
 
   @override
@@ -123,7 +132,7 @@ class _HomeSearchResultScreenState extends State<HomeSearchResultScreen>
     return NestedScrollView(
         headerSliverBuilder: (context, innerBoxScrolled) => [
               SliverAppBar(
-                backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+                backgroundColor: CommonColors.primaryThemeDarkColor,
                 centerTitle: true,
                 // search text input in title
                 flexibleSpace: FlexibleSpaceBar(
@@ -133,16 +142,19 @@ class _HomeSearchResultScreenState extends State<HomeSearchResultScreen>
                     title: Container(
                       height: 40,
                       decoration: BoxDecoration(
-                          color: const Color.fromARGB(255, 231, 231, 231),
+                          color: CommonColors.secondaryThemeDarkColor,
                           borderRadius: BorderRadius.circular(20)),
                       child: Padding(
                         padding: const EdgeInsets.only(left: 15),
                         child: TextFormField(
+                          style: TextStyle(
+                            color: CommonColors.secondaryTextColor,
+                          ),
                           readOnly: true,
                           controller: TextEditingController(text: _searchText),
                           onTap: () => {
                             Navigator.of(context).push(
-                              MyCupertinoPageRoute(
+                              MaterialPageRoute(
                                   builder: (context) => HomeSearchScreen(
                                       arguments:
                                           HomeSearchArguments(_searchText)),
@@ -152,10 +164,13 @@ class _HomeSearchResultScreenState extends State<HomeSearchResultScreen>
                           },
                           decoration: InputDecoration(
                               border: InputBorder.none,
+                              fillColor: CommonColors.secondaryThemeDarkColor,
+                              hintText:
+                                  "曲名・人名・アルバム名", // this will align the text to the exact same height to search.dart
                               suffixIcon: GestureDetector(
                                   onTap: () => {
                                         Navigator.of(context).push(
-                                          MyCupertinoPageRoute(
+                                          MaterialPageRoute(
                                               builder: (context) =>
                                                   HomeSearchScreen(
                                                       arguments:
@@ -165,23 +180,24 @@ class _HomeSearchResultScreenState extends State<HomeSearchResultScreen>
                                                   name: '/home/search/result')),
                                         )
                                       },
-                                  child: const Icon(Icons.clear,
-                                      color: Colors.black))),
+                                  child: Icon(Icons.clear,
+                                      color: CommonColors.primaryThemeColor))),
                         ),
                       ),
                     )),
                 pinned: true,
-                shape: const Border(
+                shape: Border(
                     bottom: BorderSide(
-                        color: Color.fromARGB(255, 231, 231, 231), width: 1)),
+                        color: CommonColors.secondaryThemeDarkColor, width: 1)),
                 leading: IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+                    icon: Icon(Icons.arrow_back_ios,
+                        color: CommonColors.primaryThemeColor),
                     onPressed: () => Navigator.pop(context)),
               )
             ],
         body: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: CommonColors.primaryThemeDarkColor,
           ),
           child: isFirstLoading
               ? const Center(
@@ -189,20 +205,28 @@ class _HomeSearchResultScreenState extends State<HomeSearchResultScreen>
                       width: 100,
                       height: 100,
                       child: CircularProgressIndicator()))
-              : Scrollbar(
-                  child: Stack(children: [
-                    ListView(
-                      controller: _scrollController,
-                      children: [
-                        ...albums,
-                        if (isLoadingMore)
-                          const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 50),
-                              child: Center(child: CircularProgressIndicator()))
-                      ],
-                    )
-                  ]),
-                ),
+              : albums.isEmpty
+                  ? Center(
+                      child: Text(
+                      "検索結果がありません",
+                      style: TextStyle(color: CommonColors.secondaryTextColor),
+                    ))
+                  : Scrollbar(
+                      child: Stack(children: [
+                        ListView(
+                          padding: const EdgeInsets.only(top: 10),
+                          controller: _scrollController,
+                          children: [
+                            ...albums,
+                            if (isLoadingMore)
+                              const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 50),
+                                  child: Center(
+                                      child: CircularProgressIndicator()))
+                          ],
+                        )
+                      ]),
+                    ),
         ));
   }
 }

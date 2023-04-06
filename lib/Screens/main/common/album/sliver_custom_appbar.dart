@@ -13,12 +13,14 @@ class SliverCustomeAppBar extends StatelessWidget {
     required this.albumImage,
     required this.maxAppBarHeight,
     required this.minAppBarHeight,
+    required this.onTapAction,
   }) : super(key: key);
 
   final String albumTitle;
   final StatefulWidget albumImage;
   final double maxAppBarHeight;
   final double minAppBarHeight;
+  final Function() onTapAction;
 
   @override
   Widget build(BuildContext context) {
@@ -35,9 +37,6 @@ class SliverCustomeAppBar extends StatelessWidget {
             maxHeight: maxAppBarHeight,
             minHeight: minAppBarHeight,
             builder: (context, shrinkOffset) {
-              final appBarVisible =
-                  shrinkOffset >= (maxAppBarHeight - minAppBarHeight);
-
               final double shrinkToMaxAppBarHeightRatio =
                   shrinkOffset / maxAppBarHeight;
               const double animatAlbumImageFromPoint = 0.4;
@@ -60,19 +59,23 @@ class SliverCustomeAppBar extends StatelessWidget {
                 children: [
                   Positioned(
                     top: albumPositionFromTop,
-                    child: AlbumImage(
-                      albumImage: albumImage,
-                      padding: padding,
-                      animateOpacityToZero: animateOpacityToZero,
-                      animateAlbumImage: animateAlbumImage,
-                      shrinkToMaxAppBarHeightRatio:
-                          shrinkToMaxAppBarHeightRatio,
-                      albumImageSize: albumImageSize,
+                    child: GestureDetector(
+                      onTap: onTapAction,
+                      child: AlbumImage(
+                        albumImage: albumImage,
+                        padding: padding,
+                        animateOpacityToZero: animateOpacityToZero,
+                        animateAlbumImage: animateAlbumImage,
+                        shrinkToMaxAppBarHeightRatio:
+                            shrinkToMaxAppBarHeightRatio,
+                        albumImageSize: albumImageSize,
+                      ),
                     ),
                   ),
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
                     decoration: BoxDecoration(
+                      // TODO: calculate accent color from album image
                       gradient: showFixedAppBar
                           ? LinearGradient(
                               begin: Alignment.topCenter,

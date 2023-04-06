@@ -1,167 +1,370 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:orpheus_client/Screens/main/common/album/album_description.dart';
-import 'package:orpheus_client/Screens/main/common/album/play_button.dart';
-import 'package:orpheus_client/Screens/main/common/album/sliver_custom_appbar.dart';
-import 'package:orpheus_client/api/albums.dart';
-import 'package:orpheus_client/navigator.dart';
-import 'package:orpheus_client/storage/search_history.dart';
-import 'package:orpheus_client/Screens/main/home/search_result.dart';
+import 'package:flutter/services.dart';
+import 'package:orpheus_client/Screens/main/playlist/show_add_to_playlist_modal.dart';
+import 'package:orpheus_client/providers/play_state.dart';
 import 'package:orpheus_client/storage/sqlite.dart';
 import 'package:orpheus_client/styles.dart';
+import 'package:provider/provider.dart';
+import 'package:orpheus_client/components/auto_marquee.dart';
 
-class CommonAlbumScreen extends StatefulWidget {
-  final String albumId;
-  final String albumTitle;
-  final NetworkImage? image;
-  const CommonAlbumScreen(
-      {super.key,
-      required this.albumId,
-      required this.albumTitle,
-      required this.image});
+class AlbumTrackList extends StatelessWidget {
+  final Album album;
+  AlbumTrackList({super.key, required this.album});
+  late Offset _tapPosition;
 
-  @override
-  _CommonAlbumScreenState createState() => _CommonAlbumScreenState();
-}
+  void _getTapPosision(BuildContext context, TapDownDetails details) {
+    _tapPosition = details.globalPosition;
+  }
 
-double calcImageSize(BuildContext context) {
-  Size size = MediaQuery.of(context).size;
-  const imageRatio = 0.7;
-  return size.width * imageRatio;
-}
+  String getTrackDuration(int duration) {
+    final int hours = (duration / 3600).floor();
+    final int minutes = ((duration % 3600) / 60).floor();
+    final int seconds = duration % 60;
+    if (hours == 0) {
+      return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    }
+    return '${hours.toString().padLeft(1, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
 
-class _CommonAlbumScreenState extends State<CommonAlbumScreen> {
-  bool isLoaded = false;
+  Widget buildTrack(BuildContext context, Track track) {
+    double maxWidth = MediaQuery.of(context).size.width - 110 - 25;
+    var popUpMenuItems = <PopupMenuEntry<String>>[
+      PopupMenuItem(
+        enabled: false,
+        child: SizedBox(
+          width: 300,
+          child: Text(track.title,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: CommonColors.primaryDarkTextColor)),
+        ),
+      ),
+      const PopupMenuDivider(),
+      // show context header
+      PopupMenuItem(
+        onTap: () async {
+          await Clipboard.setData(ClipboardData(text: track.title));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('コピーしました'),
+            ),
+          );
+        },
+        value: 'title',
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.title_outlined,
+              color: CommonColors.primaryThemeDarkColor,
+            ),
+            const SizedBox(
+              width: 10,
+            ),
+            const Text('タイトルをコピー'),
+          ],
+        ),
+      ),
+      PopupMenuItem(
+        onTap: () async {
+          await context.read<PlayState>().queueTracksAsSource([track]);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+              'キューに追加しました',
+            ),
+            duration: const Duration(seconds: 1),
+          ));
+        },
+        value: 'queue',
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add_to_queue_outlined,
+              color: CommonColors.primaryThemeDarkColor,
+            ),
+            const SizedBox(
+              width: 10,
+            ),
+            const Text('キューに追加'),
+          ],
+        ),
+      ),
+      PopupMenuItem(
+        onTap: () {
+          showAddToPlaylistModal(context, track: track);
+        },
+        value: 'playlist',
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.playlist_add_check_outlined,
+              color: CommonColors.primaryThemeDarkColor,
+            ),
+            const SizedBox(
+              width: 10,
+            ),
+            const Text('プレイリストに追加'),
+          ],
+        ),
+      ),
+    ];
 
-  late ScrollController _scrollController;
-  late String albumId;
-  late String albumTitle;
-  NetworkImage? networkImage;
-  Album? album;
-  late double maxAppBarHeight;
-  late double minAppBarHeight;
-  late double playPauseButtonSize;
-  late double infoBoxHeight;
+    return SizedBox(
+      height: 40,
+      child: InkWell(
+        onTapDown: (details) {
+          _getTapPosision(context, details);
+        },
+        onTap: () async {
+          await context.read<PlayState>().setTracksAsSource([track]);
+        },
+        onLongPress: () async {
+          final RenderObject? overlay =
+              Overlay.of(context)?.context.findRenderObject();
 
-  late TextEditingController _searchTextController;
+          final result = await showMenu(
+              context: context,
+              position: RelativeRect.fromRect(
+                  Rect.fromLTWH(_tapPosition.dx, _tapPosition.dy, 30, 30),
+                  Rect.fromLTWH(0, 0, overlay!.paintBounds.size.width,
+                      overlay.paintBounds.size.height)),
+              items: popUpMenuItems);
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: context.watch<PlayState>().currentTrackId == track.id
+                ? CommonColors.playingTrackBackground
+                : Colors.transparent,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 40, right: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                buildAutoMarquee(track.title, maxWidth),
+                const Spacer(),
+                Text(
+                  getTrackDuration(track.duration),
+                  style: TextStyle(
+                      color: CommonColors.tertiaryTextColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500),
+                ),
+                SizedBox(
+                  width: 35,
+                  child: GestureDetector(
+                      onTapDown: (details) async {
+                        final position = details.globalPosition;
 
-  @override
-  void initState() {
-    super.initState();
-    albumId = widget.albumId;
-    albumTitle = widget.albumTitle;
-    networkImage = widget.image;
-    _scrollController = ScrollController();
+                        final result = await showMenu(
+                            context: context,
+                            position: RelativeRect.fromLTRB(
+                                position.dx, position.dy, 0, 0),
+                            items: popUpMenuItems);
+                      },
+                      child: Icon(
+                        Icons.more_vert_rounded,
+                        color: CommonColors.tertiaryTextColor,
+                        size: 25,
+                      )),
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-    Albums.show(albumId).then((value) {
-      setState(() {
-        album = value;
-        isLoaded = true;
-      });
-    });
+  Widget buildGroup(BuildContext context, Group group) {
+    double maxWidth = MediaQuery.of(context).size.width - 90 - 25;
+
+    var popUpMenuItems = <PopupMenuEntry<String>>[
+      PopupMenuItem(
+        enabled: false,
+        child: SizedBox(
+          width: 300,
+          child: Text(group.name,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: CommonColors.primaryDarkTextColor)),
+        ),
+      ),
+      const PopupMenuDivider(),
+      // show context header
+      PopupMenuItem(
+        onTap: () async {
+          await Clipboard.setData(ClipboardData(text: group.name));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('コピーしました'),
+            ),
+          );
+        },
+        value: 'title',
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.title_outlined,
+              color: CommonColors.primaryThemeDarkColor,
+            ),
+            const SizedBox(
+              width: 10,
+            ),
+            const Text('タイトルをコピー'),
+          ],
+        ),
+      ),
+      PopupMenuItem(
+        onTap: () async {
+          await context.read<PlayState>().queueTracksAsSource(group.tracks);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+              'キューに追加しました',
+            ),
+            duration: const Duration(seconds: 1),
+          ));
+        },
+        value: 'queue',
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add_to_queue_outlined,
+              color: CommonColors.primaryThemeDarkColor,
+            ),
+            const SizedBox(
+              width: 10,
+            ),
+            const Text('キューに追加'),
+          ],
+        ),
+      ),
+      PopupMenuItem(
+        onTap: () {
+          showAddToPlaylistModal(context, group: group);
+        },
+        value: 'playlist',
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.playlist_add_check_outlined,
+              color: CommonColors.primaryThemeDarkColor,
+            ),
+            const SizedBox(
+              width: 10,
+            ),
+            const Text('プレイリストに追加'),
+          ],
+        ),
+      ),
+    ];
+    return Column(
+      children: [
+        const SizedBox(
+          height: 10,
+        ),
+        InkWell(
+          onTapDown: (details) {
+            _getTapPosision(context, details);
+          },
+          onTap: () async {
+            await context.read<PlayState>().setTracksAsSource(group.tracks);
+          },
+          onLongPress: () async {
+            final RenderObject? overlay =
+                Overlay.of(context).context.findRenderObject();
+
+            final result = await showMenu(
+                context: context,
+                position: RelativeRect.fromRect(
+                    Rect.fromLTWH(_tapPosition.dx, _tapPosition.dy, 30, 30),
+                    Rect.fromLTWH(0, 0, overlay!.paintBounds.size.width,
+                        overlay.paintBounds.size.height)),
+                items: popUpMenuItems);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: (group.actAsTrack &&
+                      context.watch<PlayState>().currentTrackId ==
+                          group.tracks.first.id)
+                  ? CommonColors.playingTrackBackground
+                  : Colors.white.withAlpha(25),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(left: 20, right: 10),
+              child: SizedBox(
+                height: 40,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    buildAutoMarquee(group.name, maxWidth),
+                    const Spacer(),
+                    Text(
+                      getTrackDuration(group.duration),
+                      style: TextStyle(
+                          color: CommonColors.tertiaryTextColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500),
+                    ),
+                    SizedBox(
+                      width: 35,
+                      child: GestureDetector(
+                          onTapDown: (details) async {
+                            final position = details.globalPosition;
+
+                            final result = await showMenu(
+                                context: context,
+                                position: RelativeRect.fromLTRB(
+                                    position.dx, position.dy, 0, 0),
+                                items: popUpMenuItems);
+                          },
+                          child: Icon(
+                            Icons.more_vert_rounded,
+                            color: CommonColors.tertiaryTextColor,
+                            size: 25,
+                          )),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (!group.actAsTrack)
+          ...group.tracks.map((track) => buildTrack(context, track)).toList(),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
-    final imageSize = calcImageSize(context);
-    maxAppBarHeight = MediaQuery.of(context).size.height * 0.5;
-    minAppBarHeight = MediaQuery.of(context).padding.top +
-        MediaQuery.of(context).size.height * 0.1;
-    playPauseButtonSize = (MediaQuery.of(context).size.width / 320) * 50 > 80
-        ? 80
-        : (MediaQuery.of(context).size.width / 320) * 50;
-    infoBoxHeight = 180;
-
-    final image = (!isLoaded)
-        ? (networkImage != null
-            ? Image(
-                image: networkImage!,
-                width: imageSize,
-                height: imageSize,
-                fit: BoxFit.cover)
-            : Image.asset('assets/no-image.jpg',
-                width: imageSize, height: imageSize, fit: BoxFit.cover))
-        : FadeInImage(
-            image: NetworkImage(album!.artworkUrl.toString()),
-            placeholder: networkImage!,
-            fadeInDuration: const Duration(milliseconds: 1),
-            fadeOutDuration: const Duration(milliseconds: 1),
-            imageErrorBuilder: (context, error, stackTrace) {
-              return Image.asset('assets/no-image.jpg',
-                  width: imageSize, height: imageSize, fit: BoxFit.cover);
-            },
-            width: imageSize,
-            height: imageSize,
-            fit: BoxFit.cover);
-
-    return !isLoaded
-        ? Center(
-            child: SizedBox(
-            width: 100,
-            height: 100,
-            child: CircularProgressIndicator(),
-          ))
-        : DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    CommonColors.primaryThemeAccentColor,
-                    Colors.black,
-                  ],
-                  stops: const [
-                    0,
-                    0.7
-                  ]),
-            ),
-            child: Stack(
+    return SliverList(
+      delegate: SliverChildListDelegate(
+        [
+          Container(
+            decoration:
+                BoxDecoration(color: CommonColors.primaryThemeDarkColor),
+            child: Column(
               children: [
-                CustomScrollView(
-                  controller: _scrollController,
-                  slivers: [
-                    SliverCustomeAppBar(
-                      albumTitle: albumTitle,
-                      albumImage: image,
-                      maxAppBarHeight: maxAppBarHeight,
-                      minAppBarHeight: minAppBarHeight,
-                    ),
-                    AlbumDescription(
-                      title: albumTitle,
-                      label: album?.label,
-                      onTapAction: () async {
-                        print("tapped");
-                      },
-                    ),
-                    SliverFixedExtentList(
-                      itemExtent: 200.0,
-                      delegate: SliverChildBuilderDelegate(
-                        (BuildContext context, int index) {
-                          return Container(
-                            alignment: Alignment.center,
-                            color: Color.fromARGB(255, 0, 0, 0),
-                            child: Text(
-                              'list item $index',
-                              style: TextStyle(fontSize: 30),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    // AlbumSongList
-                  ],
+                const SizedBox(
+                  height: 20,
                 ),
-                PlayButton(
-                  scrollController: _scrollController,
-                  maxAppBarHeight: maxAppBarHeight,
-                  minAppBarHeight: minAppBarHeight,
-                  playPauseButtonSize: playPauseButtonSize,
-                  infoBoxHeight: infoBoxHeight,
+                ...album.groups
+                    .map((group) => buildGroup(context, group))
+                    .toList(),
+                const SizedBox(
+                  height: 20,
                 ),
               ],
             ),
-          );
+          )
+        ],
+      ),
+    );
   }
 }

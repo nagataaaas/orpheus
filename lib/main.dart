@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:orpheus_client/Screens/login/login.dart';
 import 'package:orpheus_client/Screens/main/home/search.dart';
 import 'storage/credentials.dart';
@@ -6,8 +7,14 @@ import 'package:flutter/services.dart';
 import 'package:orpheus_client/Screens/main/home/navigation.dart';
 import 'package:orpheus_client/Screens/navigation.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await JustAudioBackground.init(
+    androidNotificationChannelName: "com.ryanheise.bg_demo.channel.audio",
+    androidNotificationChannelDescription: "orpheus",
+    androidNotificationOngoing: true,
+    androidNotificationIcon: "mipmap/ic_launcher",
+  );
   runApp(const MyApp());
 }
 
@@ -18,7 +25,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "Orpheus Client",
+      title: "Orpheus",
       theme: ThemeData(
         primarySwatch: Colors.blue,
         fontFamily: "Noto Sans JP",
@@ -27,7 +34,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const HomeSelector(),
         '/login': (context) => LoginScreen(),
-        '/navigation': (context) => NavigationScreen(),
+        '/navigation': (context) => const NavigationScreen(),
       },
     );
   }
@@ -39,19 +46,12 @@ class HomeSelector extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    isLoggedIn().then((value) {
-      print("value: $value");
-    });
     return FutureBuilder<bool>(
         future: isLoggedIn(),
         builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
-          isLoggedIn().then((value) {
-            print("value: $value");
-          });
-          print("snapshot: ${snapshot.data}");
           if (snapshot.hasData) {
             if (snapshot.data!) {
-              return NavigationScreen();
+              return const NavigationScreen();
             }
             return LoginScreen();
           }

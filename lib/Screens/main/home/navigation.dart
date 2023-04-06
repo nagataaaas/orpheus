@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:orpheus_client/Screens/main/common/album/album.dart';
 
-import 'package:orpheus_client/styles.dart';
-import 'package:google_nav_bar/google_nav_bar.dart';
 import 'home.dart';
 import 'search.dart';
 import 'search_result.dart';

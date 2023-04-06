@@ -2,10 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:orpheus_client/navigator.dart';
 import 'package:orpheus_client/storage/search_history.dart';
 import 'package:orpheus_client/Screens/main/home/search_result.dart';
+import 'package:orpheus_client/styles.dart';
 
 class HomeSearchArguments {
   final String searchText;
   HomeSearchArguments(this.searchText);
+}
+
+List<InputHistoryData> filterHistory(
+    String? query, List<InputHistoryData> histories) {
+  if (query == null || query.trim().isEmpty) {
+    return histories;
+  }
+  final queries = query.toLowerCase().split(RegExp(r"\s+"));
+  return histories.where((history) {
+    return queries.every((query) {
+      return history.value.toLowerCase().contains(query);
+    });
+  }).toList();
 }
 
 class HomeSearchScreen extends StatefulWidget {
@@ -18,6 +32,7 @@ class HomeSearchScreen extends StatefulWidget {
 
 class _HomeSearchScreenState extends State<HomeSearchScreen> {
   List<InputHistoryData> history = [];
+  List<InputHistoryData> filteredHistory = [];
 
   late TextEditingController _searchTextController;
 
@@ -31,6 +46,8 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
       }
       SearchHistory.get().then((value) => {
             history = value,
+            filteredHistory =
+                filterHistory(_searchTextController.text, history),
           });
     });
   }
@@ -42,7 +59,7 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
     return NestedScrollView(
         headerSliverBuilder: (context, innerBoxScrolled) => [
               SliverAppBar(
-                backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+                backgroundColor: CommonColors.primaryThemeDarkColor,
                 centerTitle: true,
                 // search text input in title
                 flexibleSpace: FlexibleSpaceBar(
@@ -52,7 +69,7 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                     title: Container(
                       height: 40,
                       decoration: BoxDecoration(
-                          color: const Color.fromARGB(255, 231, 231, 231),
+                          color: CommonColors.secondaryThemeDarkColor,
                           borderRadius: BorderRadius.circular(20)),
                       child: Padding(
                         padding: const EdgeInsets.only(left: 15),
@@ -62,11 +79,16 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                               setState(() {
                                 SearchHistory.get().then((value) => {
                                       history = value,
+                                      filteredHistory = filterHistory(
+                                          _searchTextController.text, history),
                                     });
                               });
                             }
                           },
                           child: TextFormField(
+                            style: TextStyle(
+                              color: CommonColors.secondaryTextColor,
+                            ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Please enter some text';
@@ -80,12 +102,29 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                             autofocus: true,
                             decoration: InputDecoration(
                                 border: InputBorder.none,
+                                fillColor: CommonColors.secondaryThemeDarkColor,
                                 hintText: "曲名・人名・アルバム名",
+                                hintStyle: TextStyle(
+                                  color: CommonColors.secondaryTextColor,
+                                ),
                                 suffixIcon: GestureDetector(
-                                    onTap: () =>
-                                        {_searchTextController.clear()},
-                                    child: const Icon(Icons.clear,
-                                        color: Colors.black))),
+                                    onTap: () {
+                                      _searchTextController.clear();
+                                      setState(() {
+                                        filteredHistory = filterHistory(
+                                            _searchTextController.text,
+                                            history);
+                                      });
+                                    },
+                                    child: Icon(Icons.clear,
+                                        color:
+                                            CommonColors.primaryThemeColor))),
+                            onChanged: (value) {
+                              setState(() {
+                                filteredHistory = filterHistory(
+                                    _searchTextController.text, history);
+                              });
+                            },
                             onFieldSubmitted: (value) {
                               if (history
                                   .any((element) => element.value == value)) {
@@ -110,26 +149,29 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                                     settings: const RouteSettings(
                                         name: '/home/search/result')),
                               );
-                              // Navigator.pushNamed(context, '/search', arguments: value);
                             },
                           ),
                         ),
                       ),
                     )),
                 pinned: true,
-                shape: const Border(
+                shape: Border(
                     bottom: BorderSide(
-                        color: Color.fromARGB(255, 231, 231, 231), width: 1)),
+                        color: CommonColors.secondaryThemeDarkColor, width: 1)),
                 leading: IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+                    icon: Icon(Icons.arrow_back_ios,
+                        color: CommonColors.primaryThemeColor),
                     onPressed: () => Navigator.pop(context)),
               )
             ],
         body: Scrollbar(
-          child: Material(
+          child: Container(
+            color: CommonColors.primaryThemeDarkColor,
             child: ListView(
+              padding: EdgeInsets.zero,
               children: [
-                ...history.map((e) => Dismissible(
+                ...filterHistory(_searchTextController.text, history).map((e) =>
+                    Dismissible(
                       key: ObjectKey(e),
                       background: Container(
                         padding: const EdgeInsets.only(
@@ -144,7 +186,6 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                       ),
                       direction: DismissDirection.endToStart,
                       onDismissed: (direction) {
-                        // スワイプ後に実行される（削除処理などを書く）
                         setState(() {
                           SearchHistory.removeKey(e);
                           SearchHistory.get().then((value) => {
@@ -154,7 +195,10 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                       },
                       child: ListTile(
                         leading: IconButton(
-                          icon: const Icon(Icons.history),
+                          icon: Icon(
+                            Icons.history,
+                            color: CommonColors.secondaryTextColor,
+                          ),
                           onPressed: () {
                             setState(() {
                               SearchHistory.touch(e);
@@ -171,7 +215,11 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                             });
                           },
                         ),
-                        title: Text(e.value),
+                        title: Text(
+                          e.value,
+                          style:
+                              TextStyle(color: CommonColors.secondaryTextColor),
+                        ),
                         onTap: () {
                           SearchHistory.touch(e);
                           Navigator.of(context).pushReplacement(
@@ -185,6 +233,7 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                         },
                         trailing: IconButton(
                           icon: const Icon(Icons.north_west),
+                          color: CommonColors.secondaryTextColor,
                           onPressed: () {
                             final String text = " ${e.value} ";
                             _searchTextController.text =
