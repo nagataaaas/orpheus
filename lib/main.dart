@@ -53,10 +53,8 @@ class HomeSelector extends StatelessWidget {
             if (snapshot.data!) {
               return const NavigationScreen();
             }
-            return LoginScreen();
           }
-          // TODO: show splash screen
-          return Text("loading");
+          return LoginScreen();
         });
   }
 }
