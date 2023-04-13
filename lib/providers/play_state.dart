@@ -67,6 +67,7 @@ class PlayState with ChangeNotifier {
   bool _isShuffling = false;
   bool _hasNextTrack = false;
   bool _hasPreviousTrack = false;
+  int _speed = 1; // 1: normal, 2: 0.75x
 
   final AudioPlayer _audioPlayer = AudioPlayer();
 
@@ -79,6 +80,7 @@ class PlayState with ChangeNotifier {
   bool get isShuffling => _isShuffling;
   bool get hasNextTrack => _hasNextTrack;
   bool get hasPreviousTrack => _hasPreviousTrack;
+  int get speed => _speed;
 
   PlayState() {
     setListener(_audioPlayer
@@ -150,6 +152,12 @@ class PlayState with ChangeNotifier {
   Future<void> playFirstTrack() async {
     await audioPlayer.seek(Duration.zero, index: 0);
     _audioPlayer.play();
+  }
+
+  Future<void> setSpeed(int speed) async {
+    _speed = speed;
+    await _audioPlayer.setSpeed(speed == 1 ? 1.0 : 0.75);
+    notifyListeners();
   }
 
   void setListener(AudioPlayer audioPlayer) {

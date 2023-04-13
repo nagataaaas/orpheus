@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
 import 'resolving_audio_source.dart';
 import 'package:snapping_sheet/snapping_sheet.dart';
+import 'package:orpheus_client/my_flutter_app_icons.dart';
 
 class PlayBackScreen extends StatefulWidget {
   const PlayBackScreen({Key? key}) : super(key: key);
@@ -30,15 +31,13 @@ class Controls extends StatelessWidget {
     final playing = context.watch<PlayState>().isPlaying;
     final currentIndex = context.watch<PlayState>().audioPlayer.currentIndex;
     final currentTrackId = context.watch<PlayState>().currentTrackId;
-    final loopMode = context.watch<PlayState>().loopMode;
-    final isShuffling = context.watch<PlayState>().isShuffling;
     final hasNextTrack = context.watch<PlayState>().hasNextTrack;
     final hasPreviousTrack = context.watch<PlayState>().hasPreviousTrack;
     final color = currentTrackId == null
         ? CommonColors.primaryThemeColor.withOpacity(0.5)
         : CommonColors.primaryThemeColor;
     late final playPauseButton;
-    const iconSize = 33.0;
+    const iconSize = 32.0;
     final isTrackSelected = !(currentIndex == null ||
         currentTrackId == null ||
         context.read<PlayState>().playlist.length <= currentIndex);
@@ -75,41 +74,9 @@ class Controls extends StatelessWidget {
       );
     }
 
-    final loopButton = IconButton(
-      onPressed: () {
-        switch (loopMode) {
-          case LoopMode.off:
-            context.read<PlayState>().setLoopMode(LoopMode.all);
-            break;
-          case LoopMode.all:
-            context.read<PlayState>().setLoopMode(LoopMode.one);
-            break;
-          case LoopMode.one:
-            context.read<PlayState>().setLoopMode(LoopMode.off);
-            break;
-        }
-      },
-      iconSize: iconSize,
-      color: color,
-      icon: {
-        LoopMode.off: const Icon(Icons.repeat_rounded),
-        LoopMode.one: const Icon(Icons.repeat_one_on_rounded),
-        LoopMode.all: const Icon(Icons.repeat_on_rounded),
-      }[loopMode]!,
-    );
-
-    final shuffleButton = IconButton(
-      padding: const EdgeInsets.all(0),
-      onPressed: () => context.read<PlayState>().setShuffle(!isShuffling),
-      iconSize: iconSize,
-      color: color,
-      icon: isShuffling
-          ? const Icon(Icons.shuffle_on_rounded)
-          : const Icon(Icons.shuffle_rounded),
-    );
-
     final previousButton = IconButton(
-      padding: const EdgeInsets.all(0),
+      padding: EdgeInsets.zero,
+      constraints: BoxConstraints(),
       onPressed: () async {
         if (hasPreviousTrack) {
           await context.read<PlayState>().audioPlayer.seekToPrevious();
@@ -123,7 +90,8 @@ class Controls extends StatelessWidget {
     );
 
     final nextButton = IconButton(
-      padding: const EdgeInsets.all(0),
+      padding: EdgeInsets.zero,
+      constraints: BoxConstraints(),
       onPressed: () async {
         if (hasNextTrack) {
           await context.read<PlayState>().audioPlayer.seekToNext();
@@ -137,7 +105,8 @@ class Controls extends StatelessWidget {
     );
 
     final replay10 = IconButton(
-      padding: const EdgeInsets.all(0),
+      padding: EdgeInsets.zero,
+      constraints: BoxConstraints(),
       onPressed: () async {
         final audioPlayer = context.read<PlayState>().audioPlayer;
         if (isTrackSelected) {
@@ -153,7 +122,8 @@ class Controls extends StatelessWidget {
     );
 
     final forward30 = IconButton(
-      padding: const EdgeInsets.all(0),
+      padding: EdgeInsets.zero,
+      constraints: BoxConstraints(),
       onPressed: () async {
         final audioPlayer = context.read<PlayState>().audioPlayer;
         if (isTrackSelected) {
@@ -168,16 +138,33 @@ class Controls extends StatelessWidget {
       icon: const Icon(Icons.forward_30_rounded),
     );
 
+    final speed = IconButton(
+      padding: EdgeInsets.zero,
+      constraints: BoxConstraints(),
+      onPressed: () async {
+        await context
+            .read<PlayState>()
+            .setSpeed(3 - context.read<PlayState>().speed);
+      },
+      iconSize: iconSize * 0.8,
+      color: color,
+      icon: context.read<PlayState>().speed == 1
+          ? const Icon(CustomIcon.rabbit)
+          : const Icon(CustomIcon.turtle),
+    );
+
     final controls = Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        loopButton,
+        const SizedBox(
+          width: iconSize * 0.8,
+        ),
         previousButton,
         replay10,
         playPauseButton,
         forward30,
         nextButton,
-        shuffleButton
+        speed,
       ],
     );
     if (currentTrackId == null) {
@@ -318,57 +305,125 @@ class PlayQueue extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentIndex = context.read<PlayState>().audioPlayer.currentIndex;
+    final currentTrackId = context.watch<PlayState>().currentTrackId;
     final playlist = context.watch<PlayState>().playlist;
+    final loopMode = context.watch<PlayState>().loopMode;
+    final isShuffling = context.watch<PlayState>().isShuffling;
+    const iconSize = 32.0;
+    final color = currentTrackId == null
+        ? CommonColors.primaryThemeColor.withOpacity(0.5)
+        : CommonColors.primaryThemeColor;
+
+    final shuffleButton = IconButton(
+      padding: EdgeInsets.zero,
+      constraints: BoxConstraints(),
+      onPressed: () => context.read<PlayState>().setShuffle(!isShuffling),
+      iconSize: iconSize,
+      color: color,
+      icon: isShuffling
+          ? const Icon(Icons.shuffle_on_rounded)
+          : const Icon(Icons.shuffle_rounded),
+    );
+    final loopButton = IconButton(
+      padding: EdgeInsets.zero,
+      constraints: BoxConstraints(),
+      onPressed: () {
+        switch (loopMode) {
+          case LoopMode.off:
+            context.read<PlayState>().setLoopMode(LoopMode.all);
+            break;
+          case LoopMode.all:
+            context.read<PlayState>().setLoopMode(LoopMode.one);
+            break;
+          case LoopMode.one:
+            context.read<PlayState>().setLoopMode(LoopMode.off);
+            break;
+        }
+      },
+      iconSize: iconSize,
+      color: color,
+      icon: {
+        LoopMode.off: const Icon(Icons.repeat_rounded),
+        LoopMode.one: const Icon(Icons.repeat_one_on_rounded),
+        LoopMode.all: const Icon(Icons.repeat_on_rounded),
+      }[loopMode]!,
+    );
+
     return Container(
       color: CommonColors.secondaryThemeDarkColor,
       child: Scrollbar(
         thumbVisibility: true,
-        child: ListView.builder(
-          itemCount: playlist.length,
-          itemBuilder: (context, index) {
-            final tag =
-                (playlist[index] as ResolvingAudioSource).tag as MediaItem;
-            return Dismissible(
-              key: ObjectKey(tag),
-              background: Container(
-                padding: const EdgeInsets.only(
-                  right: 10,
-                ),
-                alignment: AlignmentDirectional.centerEnd,
-                color: Colors.red,
-                child: const Icon(
-                  Icons.delete,
-                  color: Colors.white,
-                ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 32,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  loopButton,
+                  const SizedBox(
+                    width: 20,
+                  ),
+                  shuffleButton,
+                  const SizedBox(
+                    width: 20,
+                  ),
+                ],
               ),
-              child: ListTile(
-                title: Text(tag.title,
-                    style: TextStyle(
-                        color: CommonColors.secondaryTextColor,
-                        overflow: TextOverflow.ellipsis)),
-                subtitle: Text(tag.artist!,
-                    style: TextStyle(
-                        color: CommonColors.secondaryTextColor,
-                        overflow: TextOverflow.ellipsis)),
-                leading: Text('${index + 1}',
-                    style: TextStyle(
-                        color: CommonColors.secondaryTextColor,
-                        overflow: TextOverflow.ellipsis)),
-                trailing: index == currentIndex
-                    ? Icon(
-                        Icons.play_arrow_rounded,
-                        color: CommonColors.playButtonColor,
-                      )
-                    : null,
-                onTap: () async {
-                  await context.read<PlayState>().playIndexItem(index);
+            ),
+            Flexible(
+              child: ListView.builder(
+                itemCount: playlist.length,
+                itemBuilder: (context, index) {
+                  final tag = (playlist[index] as ResolvingAudioSource).tag
+                      as MediaItem;
+                  return Dismissible(
+                    key: ObjectKey(tag),
+                    background: Container(
+                      padding: const EdgeInsets.only(
+                        right: 10,
+                      ),
+                      alignment: AlignmentDirectional.centerEnd,
+                      color: Colors.red,
+                      child: const Icon(
+                        Icons.delete,
+                        color: Colors.white,
+                      ),
+                    ),
+                    child: ListTile(
+                      title: Text(tag.title,
+                          style: TextStyle(
+                              color: CommonColors.secondaryTextColor,
+                              overflow: TextOverflow.ellipsis)),
+                      subtitle: Text(tag.artist!,
+                          style: TextStyle(
+                              color: CommonColors.secondaryTextColor,
+                              overflow: TextOverflow.ellipsis)),
+                      leading: Text('${index + 1}',
+                          style: TextStyle(
+                              color: CommonColors.secondaryTextColor,
+                              overflow: TextOverflow.ellipsis)),
+                      trailing: index == currentIndex
+                          ? Icon(
+                              Icons.play_arrow_rounded,
+                              color: CommonColors.playButtonColor,
+                            )
+                          : null,
+                      onTap: () async {
+                        await context.read<PlayState>().playIndexItem(index);
+                      },
+                    ),
+                    onDismissed: (direction) async {
+                      await context
+                          .read<PlayState>()
+                          .removeTrackFromPlaylist(index);
+                    },
+                  );
                 },
               ),
-              onDismissed: (direction) async {
-                await context.read<PlayState>().removeTrackFromPlaylist(index);
-              },
-            );
-          },
+            ),
+          ],
         ),
       ),
     );

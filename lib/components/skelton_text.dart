@@ -1,3 +1,4 @@
+// https://fireship.io/snippets/flutter-skeleton-text/
 import 'package:flutter/material.dart';
 
 class SkeletonText extends StatefulWidget {

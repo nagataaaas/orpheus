@@ -10,7 +10,6 @@ class PlaylistScreenChildArguments {
 
 class PlaylistScreenRoutes {
   static const String root = '/';
-  // TODO: add playlist show
   static const String showPlaylist = '/playlist/show';
   static const String showAlbum = '/album/show';
 }

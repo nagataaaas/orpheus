@@ -69,15 +69,16 @@ class NavigationScreenState extends State<NavigationScreen> {
             controller: _pageController,
             physics: const NeverScrollableScrollPhysics(),
             children: _pages,
+            onPageChanged: (int i) {
+              setIndex(i);
+            },
           ),
           bottomNavigationBar: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (_selectedIndex != 2)
                 BottomPlayBackBar(onTap: () {
-                  setState(() {
-                    setIndex(2);
-                  });
+                  setIndex(2);
                 }),
               Container(
                 decoration: BoxDecoration(
@@ -115,10 +116,7 @@ class NavigationScreenState extends State<NavigationScreen> {
                                 break;
                             }
                           } else {
-                            setState(() {
-                              _selectedIndex = index;
-                              _pageController.jumpToPage(_selectedIndex);
-                            });
+                            setIndex(index);
                           }
                         },
                         items: const [

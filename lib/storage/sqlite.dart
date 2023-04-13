@@ -306,6 +306,9 @@ class DatabaseHelper {
     await db.execute(Album.createTableSql());
     await db.execute(Group.createTableSql());
     await db.execute(Track.createTableSql());
+    await db.execute(Playlist.createTableSql());
+    await db.execute(Playlist.createFirstMylist());
+    await db.execute(PlaylistTrack.createTableSql());
   }
 
   static setDatabase() async {

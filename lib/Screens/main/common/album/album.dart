@@ -1,3 +1,5 @@
+// album image and description design from https://github.com/rutvik110/Flutter-Animations
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
