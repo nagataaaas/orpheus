@@ -12,29 +12,26 @@ class Background extends StatelessWidget {
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
 
-    double imagWidth;
-    if (size.width > size.height) {
-      // background image is 16:9
-      // and make this image a little bit bigger to half of the screen
-      imagWidth = size.height.toDouble() * (16 / 9) * 0.6;
-    } else {
-      imagWidth = size.width.toDouble();
-    }
+    final imagWidth = size.height.toDouble() * 0.25;
+
     return Container(
       height: size.height,
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Color(0xFF05121A),
+        color: Color(0xFF9F844B),
       ),
       child: Stack(
         children: <Widget>[
           Positioned(
-            bottom: 0,
-            right: 0,
-            child: Image.asset(
-              "assets/login/background.png",
-              width: imagWidth,
-              alignment: Alignment.bottomRight,
+            bottom: (imagWidth * 1.5) * -0.3,
+            left: 0,
+            child: Transform.scale(
+              scaleX: -1,
+              child: Image.asset(
+                "assets/login/background2.png",
+                width: imagWidth,
+                alignment: Alignment.bottomRight,
+              ),
             ),
           ),
           child,

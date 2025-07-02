@@ -9,6 +9,8 @@ import 'package:flutter/services.dart';
 import 'package:orpheus_client/api/auth.dart' as auth;
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
@@ -17,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool obscurePassword = true;
   bool rememberMe = false;
 
+  @override
   void initState() {
     super.initState();
     SystemChrome.setPreferredOrientations([
