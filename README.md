@@ -1,16 +1,76 @@
-# orpheus_client
+# Orpheus
 
-A new Flutter project.
+Yamato Nagata(nagata@nagata.pro)
 
-## Getting Started
+Naxos Japan のクラシック音楽ストリーミングサービス用のオープンソース Flutter クライアントアプリケーション。
 
-This project is a starting point for a Flutter application.
+## 重要な免責事項
 
-A few resources to get you started if this is your first Flutter project:
+**本アプリケーション内で提供される全ての音楽コンテンツ、メタデータ、アルバムアートワーク等の著作権は「ナクソス・ジャパン株式会社」に帰属します。**
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+本アプリケーションはオープンソースプロジェクトとして公開されていますが、権利者からの申し立てがあった場合、本アプリケーションは各種ストアから削除される可能性があります。
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## プロジェクトについて
+
+このプロジェクトは、Naxos.jp API を使用してクラシック音楽をストリーミング再生するための Flutter アプリケーションです。
+
+### 主な機能
+
+-   楽曲検索
+-   アルバムブラウジング
+-   プレイリスト管理
+-   バックグラウンド再生
+-   オフライン再生履歴
+
+## 開発環境のセットアップ
+
+### 必要な環境
+
+-   Flutter 3.0 以上
+-   Dart 2.17 以上
+-   iOS 開発の場合: Xcode 13 以上
+-   Android 開発の場合: Android Studio
+
+### インストール手順
+
+```bash
+# リポジトリのクローン
+git clone https://github.com/nagataaaas/orpheus.git
+cd orpheus
+
+# 依存関係のインストール
+flutter pub get
+
+# iOS向けの追加セットアップ
+cd ios
+pod install
+cd ..
+
+# アプリの実行
+flutter run
+```
+
+## ビルド方法
+
+```bash
+# iOS向けビルド
+flutter build ios
+
+# Android向けビルド
+flutter build apk
+
+# Web向けビルド
+flutter build web
+```
+
+## コントリビューションについて
+
+PR や issue を歓迎します。以下の点にご注意ください：
+
+1. 著作権で保護されたコンテンツを直接含めないでください
+2. API キーや認証情報をコミットしないでください
+3. 日本語でのコミュニケーションも可能です
+
+## ライセンス
+
+本プロジェクトのソースコードは MIT ライセンスの下で公開されています。ただし、アプリケーション内で提供される音楽コンテンツには適用されません。
